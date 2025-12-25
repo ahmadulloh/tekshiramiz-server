@@ -12,15 +12,15 @@ app.use(cors())
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: false })
 
 // =======================
-// 📂 MULTER
+// 🧮 MIJOZ ID (RAM)
 // =======================
-const upload = multer({
-  dest: path.join(__dirname, 'uploads')
-})
+let clientCounter = 0
 
 // =======================
-// 🚀 SEND
+// 📂 MULTER (TEMP)
 // =======================
+const upload = multer({ dest: 'tmp/' })
+
 app.post(
   '/send',
   upload.fields([
@@ -29,47 +29,47 @@ app.post(
   ]),
   async (req, res) => {
 
-    // foydalanuvchiga darhol javob
+    // FOYDALANUVCHIGA DARHOL JAVOB
     res.json({ success: true })
 
     try {
+      clientCounter += 1
+      const clientId = clientCounter
+
       const { name, telegram, whatsapp } = req.body
 
-      // 🆔 Telegram o‘zi bergan ID
-      const uniqId = Date.now().toString().slice(-6)
-
-      // 📩 MATN
-      const msg = await bot.sendMessage(
+      // 📝 MATN + ID
+      await bot.sendMessage(
         process.env.CHAT_ID,
 `🆕 Yangi tekshiruv
-🆔 Buyurtma ID: ${uniqId}
+🆔 Buyurtma ID: ${clientId}
 
 👤 Ism: ${name}
-📱 Telegram/Telefon: ${telegram}
+📱 Aloqa: ${telegram}
 💬 WhatsApp: ${whatsapp}
 💸 Narx: 150.000 so‘m`
       )
 
-      // 📎 PASSPORT (file)
+      // 📎 PASSPORT (FILE)
       await bot.sendDocument(
         process.env.CHAT_ID,
-        fs.createReadStream(req.files.passport[0].path),
-        { caption: `📎 Pasport | ID: ${uniqId}` }
+        req.files.passport[0].path,
+        { caption: `📎 Pasport | ID ${clientId}` }
       )
 
-      // 📎 CHEK (file)
+      // 📎 CHEK (FILE)
       await bot.sendDocument(
         process.env.CHAT_ID,
-        fs.createReadStream(req.files.check[0].path),
-        { caption: `📎 To‘lov cheki | ID: ${uniqId}` }
+        req.files.check[0].path,
+        { caption: `📎 To‘lov cheki | ID ${clientId}` }
       )
 
-      // 🧹 fayllarni o‘chiramiz
+      // 🧹 TOZALASH
       fs.unlink(req.files.passport[0].path, () => {})
       fs.unlink(req.files.check[0].path, () => {})
 
     } catch (e) {
-      console.error(e)
+      console.error('Telegram error:', e.message)
     }
   }
 )
