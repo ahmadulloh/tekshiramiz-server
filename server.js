@@ -4,23 +4,28 @@ const multer = require('multer')
 const TelegramBot = require('node-telegram-bot-api')
 const cors = require('cors')
 const fs = require('fs')
-const path = require('path')
 
 const app = express()
 app.use(cors())
 
+// =======================
+// 🤖 TELEGRAM BOT
+// =======================
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: false })
 
 // =======================
-// 🧮 MIJOZ ID (RAM)
+// 🧮 BUYURTMA ID (1,2,3…)
 // =======================
-let clientCounter = 0
+let orderId = 0
 
 // =======================
-// 📂 MULTER (TEMP)
+// 📂 MULTER (TEMP papka)
 // =======================
 const upload = multer({ dest: 'tmp/' })
 
+// =======================
+// 🚀 API
+// =======================
 app.post(
   '/send',
   upload.fields([
@@ -29,57 +34,60 @@ app.post(
   ]),
   async (req, res) => {
 
-    // FOYDALANUVCHIGA DARHOL JAVOB
+    // 1️⃣ Frontendga darhol javob
     res.json({ success: true })
 
     try {
-      clientCounter += 1
-      const clientId = clientCounter
+      orderId++
+      const id = orderId
 
       const { name, telegram, whatsapp } = req.body
 
-      // 📝 MATN + ID
-     await bot.sendMessage(
-  process.env.CHAT_ID,
-  `🆕 <b>Yangi tekshiruv</b>
-🆔 <b>Buyurtma ID:</b> ${clientId}
+      // 📞 WhatsApp raqamni tozalaymiz (faqat raqam)
+      const cleanWa = whatsapp.replace(/\D/g, '')
+
+      // 📝 XABAR (WhatsApp bosiladigan)
+      await bot.sendMessage(
+        process.env.CHAT_ID,
+        `🆕 <b>Yangi tekshiruv</b>
+🆔 <b>Buyurtma ID:</b> ${id}
 
 👤 <b>Ism:</b> ${name}
 📱 <b>Aloqa:</b> ${telegram}
-💬 <b>WhatsApp:</b> 
-<a href="https://api.whatsapp.com/send/?phone=${whatsapp.replace(/\D/g, '')}&text&type=phone_number&app_absent=0">
-${whatsapp}
+💬 <b>WhatsApp:</b>
+<a href="https://api.whatsapp.com/send/?phone=${cleanWa}&text&type=phone_number&app_absent=0">
+https://api.whatsapp.com/send/?phone=${cleanWa}
 </a>
 
 💸 <b>Narx:</b> 150.000 so‘m`,
-  { parse_mode: 'HTML' }
-)
+        { parse_mode: 'HTML', disable_web_page_preview: true }
+      )
 
-
-      // 📎 PASSPORT (FILE)
+      // 📎 PASPORT (FILE)
       await bot.sendDocument(
         process.env.CHAT_ID,
         req.files.passport[0].path,
-        { caption: `📎 Pasport | ID ${clientId}` }
+        { caption: `📎 Pasport | Buyurtma ID ${id}` }
       )
 
       // 📎 CHEK (FILE)
       await bot.sendDocument(
         process.env.CHAT_ID,
         req.files.check[0].path,
-        { caption: `📎 To‘lov cheki | ID ${clientId}` }
+        { caption: `📎 To‘lov cheki | Buyurtma ID ${id}` }
       )
 
-      // 🧹 TOZALASH
+      // 🧹 TEMP fayllarni o‘chiramiz
       fs.unlink(req.files.passport[0].path, () => {})
       fs.unlink(req.files.check[0].path, () => {})
 
-    } catch (e) {
-      console.error('Telegram error:', e.message)
+    } catch (err) {
+      console.error('Telegram error:', err.message)
     }
   }
 )
 
+// =======================
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log('✅ Server ishga tushdi')
