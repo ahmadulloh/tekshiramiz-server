@@ -4,21 +4,23 @@ const multer = require('multer')
 const TelegramBot = require('node-telegram-bot-api')
 const cors = require('cors')
 const fs = require('fs')
+const sharp = require('sharp')
 
 const app = express()
 app.use(cors())
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: false })
 
-// =======================
-// 🧮 BUYURTMA ID (RAM)
-// =======================
 let orderId = 0
-
-// =======================
-// 📂 MULTER (TEMP)
-// =======================
 const upload = multer({ dest: 'tmp/' })
+
+// 📉 RASMNI SIQISH
+async function compressImage(input, output) {
+  await sharp(input)
+    .resize({ width: 1600 })
+    .jpeg({ quality: 70 })
+    .toFile(output)
+}
 
 app.post(
   '/send',
@@ -27,18 +29,14 @@ app.post(
     { name: 'check', maxCount: 1 }
   ]),
   async (req, res) => {
-
-    // FOYDALANUVCHIGA DARHOL JAVOB
     res.json({ success: true })
 
     try {
-      orderId += 1
+      orderId++
       const id = orderId
-
       const { name, telegram, whatsapp } = req.body
-      const waNumber = whatsapp.replace(/\D/g, '')
+      const wa = whatsapp.replace(/\D/g, '')
 
-      // 📝 MATN + WHATSAPP LINK
       await bot.sendMessage(
         process.env.CHAT_ID,
         `🆕 <b>Yangi tekshiruv</b>
@@ -47,39 +45,47 @@ app.post(
 👤 <b>Ism:</b> ${name}
 📱 <b>Aloqa:</b> ${telegram}
 💬 <b>WhatsApp:</b>
-<a href="https://api.whatsapp.com/send/?phone=${waNumber}&text&type=phone_number&app_absent=0">
-${whatsapp}
-</a>
+<a href="https://api.whatsapp.com/send/?phone=${wa}&text&type=phone_number&app_absent=0">${whatsapp}</a>
 
 💸 <b>Narx:</b> 150.000 so‘m`,
         { parse_mode: 'HTML' }
       )
 
-      // 📸 PASSPORT — PHOTO (MUHIM!)
+      // ==== PASSPORT ====
+      const pIn = req.files.passport[0].path
+      const pOut = `tmp/passport_${id}.jpg`
+      await compressImage(pIn, pOut)
+
       await bot.sendPhoto(
         process.env.CHAT_ID,
-        fs.createReadStream(req.files.passport[0].path),
+        fs.createReadStream(pOut),
         { caption: `📘 Pasport | ID ${id}` }
       )
 
-      // 📸 CHEK — PHOTO
+      // ==== CHEK ====
+      const cIn = req.files.check[0].path
+      const cOut = `tmp/check_${id}.jpg`
+      await compressImage(cIn, cOut)
+
       await bot.sendPhoto(
         process.env.CHAT_ID,
-        fs.createReadStream(req.files.check[0].path),
+        fs.createReadStream(cOut),
         { caption: `🧾 To‘lov cheki | ID ${id}` }
       )
 
-      // 🧹 TEMP FAYLLARNI O‘CHIRAMIZ
-      fs.unlink(req.files.passport[0].path, () => {})
-      fs.unlink(req.files.check[0].path, () => {})
+      // 🧹 TOZALASH
+      fs.unlink(pIn, () => {})
+      fs.unlink(cIn, () => {})
+      fs.unlink(pOut, () => {})
+      fs.unlink(cOut, () => {})
 
-    } catch (err) {
-      console.error('Telegram error:', err.message)
+    } catch (e) {
+      console.error(e.message)
     }
   }
 )
 
-const PORT = process.env.PORT || 3000
-app.listen(PORT, () => {
-  console.log('✅ Server ishga tushdi')
-})
+app.listen(process.env.PORT || 3000, () =>
+  console.log('✅ Server ishlayapti')
+)
+
