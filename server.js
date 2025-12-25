@@ -8,54 +8,18 @@ const path = require('path')
 
 const app = express()
 app.use(cors())
-app.use(express.json())
 
-// =======================
-// 🤖 TELEGRAM BOT
-// =======================
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: false })
-
-// =======================
-// 📁 uploads papka
-// =======================
-const uploadDir = path.join(__dirname, 'uploads')
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir)
-
-// =======================
-// 🧮 MIJOZ ID SANAGICH
-// =======================
-const COUNTER_FILE = path.join(__dirname, 'counter.txt')
-
-function getNextClientId() {
-  let id = 0
-  if (fs.existsSync(COUNTER_FILE)) {
-    id = parseInt(fs.readFileSync(COUNTER_FILE, 'utf8')) || 0
-  }
-  id += 1
-  fs.writeFileSync(COUNTER_FILE, String(id))
-  return id
-}
 
 // =======================
 // 📂 MULTER
 // =======================
-const storage = multer.diskStorage({
-  destination: uploadDir,
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '_' + file.originalname)
-  }
+const upload = multer({
+  dest: path.join(__dirname, 'uploads')
 })
-const upload = multer({ storage })
 
 // =======================
-// 🧹 FAYL O‘CHIRISH
-// =======================
-function deleteFile(filePath) {
-  fs.unlink(filePath, () => {})
-}
-
-// =======================
-// 🚀 API
+// 🚀 SEND
 // =======================
 app.post(
   '/send',
@@ -65,45 +29,47 @@ app.post(
   ]),
   async (req, res) => {
 
-    // ⚡ foydalanuvchiga darhol javob
+    // foydalanuvchiga darhol javob
     res.json({ success: true })
 
     try {
       const { name, telegram, whatsapp } = req.body
-      const clientId = getNextClientId()
 
-      // 📝 TEXT
-      await bot.sendMessage(
+      // 🆔 Telegram o‘zi bergan ID
+      const uniqId = Date.now().toString().slice(-6)
+
+      // 📩 MATN
+      const msg = await bot.sendMessage(
         process.env.CHAT_ID,
-`🆕 YANGI BUYURTMA
-🆔 Buyurtma №${clientId}
+`🆕 Yangi tekshiruv
+🆔 Buyurtma ID: ${uniqId}
 
 👤 Ism: ${name}
-📱 Aloqa: ${telegram}
+📱 Telegram/Telefon: ${telegram}
 💬 WhatsApp: ${whatsapp}
-💰 Narx: 150.000 so‘m`
+💸 Narx: 150.000 so‘m`
       )
 
-      // 📎 PASSPORT
-      const passportPath = req.files.passport[0].path
+      // 📎 PASSPORT (file)
       await bot.sendDocument(
         process.env.CHAT_ID,
-        fs.createReadStream(passportPath),
-        { caption: `📎 Pasport | Buyurtma №${clientId}` }
+        fs.createReadStream(req.files.passport[0].path),
+        { caption: `📎 Pasport | ID: ${uniqId}` }
       )
-      deleteFile(passportPath)
 
-      // 📎 CHEK
-      const checkPath = req.files.check[0].path
+      // 📎 CHEK (file)
       await bot.sendDocument(
         process.env.CHAT_ID,
-        fs.createReadStream(checkPath),
-        { caption: `📎 To‘lov cheki | Buyurtma №${clientId}` }
+        fs.createReadStream(req.files.check[0].path),
+        { caption: `📎 To‘lov cheki | ID: ${uniqId}` }
       )
-      deleteFile(checkPath)
 
-    } catch (err) {
-      console.error('Telegram error:', err.message)
+      // 🧹 fayllarni o‘chiramiz
+      fs.unlink(req.files.passport[0].path, () => {})
+      fs.unlink(req.files.check[0].path, () => {})
+
+    } catch (e) {
+      console.error(e)
     }
   }
 )
