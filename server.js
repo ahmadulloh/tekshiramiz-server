@@ -88,4 +88,3 @@ app.post(
 app.listen(process.env.PORT || 3000, () =>
   console.log('✅ Server ishlayapti')
 )
-
