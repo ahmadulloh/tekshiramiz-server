@@ -39,16 +39,22 @@ app.post(
       const { name, telegram, whatsapp } = req.body
 
       // 📝 MATN + ID
-      await bot.sendMessage(
-        process.env.CHAT_ID,
-`🆕 Yangi tekshiruv
-🆔 Buyurtma ID: ${clientId}
+     await bot.sendMessage(
+  process.env.CHAT_ID,
+  `🆕 <b>Yangi tekshiruv</b>
+🆔 <b>Buyurtma ID:</b> ${clientId}
 
-👤 Ism: ${name}
-📱 Aloqa: ${telegram}
-💬 WhatsApp: ${whatsapp}
-💸 Narx: 150.000 so‘m`
-      )
+👤 <b>Ism:</b> ${name}
+📱 <b>Aloqa:</b> ${telegram}
+💬 <b>WhatsApp:</b> 
+<a href="https://api.whatsapp.com/send/?phone=${whatsapp.replace(/\D/g, '')}&text&type=phone_number&app_absent=0">
+${whatsapp}
+</a>
+
+💸 <b>Narx:</b> 150.000 so‘m`,
+  { parse_mode: 'HTML' }
+)
+
 
       // 📎 PASSPORT (FILE)
       await bot.sendDocument(
