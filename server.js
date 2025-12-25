@@ -8,24 +8,18 @@ const fs = require('fs')
 const app = express()
 app.use(cors())
 
-// =======================
-// 🤖 TELEGRAM BOT
-// =======================
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: false })
 
 // =======================
-// 🧮 BUYURTMA ID (1,2,3…)
+// 🧮 BUYURTMA ID (RAM)
 // =======================
 let orderId = 0
 
 // =======================
-// 📂 MULTER (TEMP papka)
+// 📂 MULTER (TEMP)
 // =======================
 const upload = multer({ dest: 'tmp/' })
 
-// =======================
-// 🚀 API
-// =======================
 app.post(
   '/send',
   upload.fields([
@@ -34,19 +28,17 @@ app.post(
   ]),
   async (req, res) => {
 
-    // 1️⃣ Frontendga darhol javob
+    // FOYDALANUVCHIGA DARHOL JAVOB
     res.json({ success: true })
 
     try {
-      orderId++
+      orderId += 1
       const id = orderId
 
       const { name, telegram, whatsapp } = req.body
+      const waNumber = whatsapp.replace(/\D/g, '')
 
-      // 📞 WhatsApp raqamni tozalaymiz (faqat raqam)
-      const cleanWa = whatsapp.replace(/\D/g, '')
-
-      // 📝 XABAR (WhatsApp bosiladigan)
+      // 📝 MATN + WHATSAPP LINK
       await bot.sendMessage(
         process.env.CHAT_ID,
         `🆕 <b>Yangi tekshiruv</b>
@@ -55,29 +47,29 @@ app.post(
 👤 <b>Ism:</b> ${name}
 📱 <b>Aloqa:</b> ${telegram}
 💬 <b>WhatsApp:</b>
-<a href="https://api.whatsapp.com/send/?phone=${cleanWa}&text&type=phone_number&app_absent=0">
-https://api.whatsapp.com/send/?phone=${cleanWa}
+<a href="https://api.whatsapp.com/send/?phone=${waNumber}&text&type=phone_number&app_absent=0">
+${whatsapp}
 </a>
 
 💸 <b>Narx:</b> 150.000 so‘m`,
-        { parse_mode: 'HTML', disable_web_page_preview: true }
+        { parse_mode: 'HTML' }
       )
 
-      // 📎 PASPORT (FILE)
-      await bot.sendDocument(
+      // 📸 PASSPORT — PHOTO (MUHIM!)
+      await bot.sendPhoto(
         process.env.CHAT_ID,
-        req.files.passport[0].path,
-        { caption: `📎 Pasport | Buyurtma ID ${id}` }
+        fs.createReadStream(req.files.passport[0].path),
+        { caption: `📘 Pasport | ID ${id}` }
       )
 
-      // 📎 CHEK (FILE)
-      await bot.sendDocument(
+      // 📸 CHEK — PHOTO
+      await bot.sendPhoto(
         process.env.CHAT_ID,
-        req.files.check[0].path,
-        { caption: `📎 To‘lov cheki | Buyurtma ID ${id}` }
+        fs.createReadStream(req.files.check[0].path),
+        { caption: `🧾 To‘lov cheki | ID ${id}` }
       )
 
-      // 🧹 TEMP fayllarni o‘chiramiz
+      // 🧹 TEMP FAYLLARNI O‘CHIRAMIZ
       fs.unlink(req.files.passport[0].path, () => {})
       fs.unlink(req.files.check[0].path, () => {})
 
@@ -87,7 +79,6 @@ https://api.whatsapp.com/send/?phone=${cleanWa}
   }
 )
 
-// =======================
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log('✅ Server ishga tushdi')
