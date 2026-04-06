@@ -52,7 +52,7 @@ await bot.sendMessage(
 💸 <b>Narx:</b> 180.000 so‘m`,
   { parse_mode: 'HTML' }
 )
-      )
+      
 
       // ==== PASSPORT ====
       const pIn = req.files.passport[0].path
