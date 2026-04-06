@@ -32,14 +32,16 @@ app.post(
     res.json({ success: true })
 
     try {
-      orderId++
-      const id = orderId
-      const { name, telegram, whatsapp } = req.body
-      const wa = whatsapp.replace(/\D/g, '')
+ orderId++
 
-      await bot.sendMessage(
-        process.env.CHAT_ID,
-        `🆕 <b>Yangi tekshiruv</b>
+const id = String(orderId).padStart(3, '0')
+
+const { name, telegram, whatsapp } = req.body
+const wa = whatsapp.replace(/\D/g, '')
+
+await bot.sendMessage(
+  process.env.CHAT_ID,
+`🆕 <b>Yangi tekshiruv</b>
 🆔 <b>Buyurtma ID:</b> ${id}
 
 👤 <b>Ism:</b> ${name}
@@ -47,8 +49,9 @@ app.post(
 💬 <b>WhatsApp:</b>
 <a href="https://api.whatsapp.com/send/?phone=${wa}&text&type=phone_number&app_absent=0">${whatsapp}</a>
 
-💸 <b>Narx:</b> 150.000 so‘m`,
-        { parse_mode: 'HTML' }
+💸 <b>Narx:</b> 180.000 so‘m`,
+  { parse_mode: 'HTML' }
+)
       )
 
       // ==== PASSPORT ====
