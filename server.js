@@ -52,18 +52,17 @@ app.post(
       )
 
       // PASSPORT
-      await bot.sendDocument(
-        process.env.CHAT_ID,
-        req.files.passport[0].path,
-        { caption: `📘 Pasport | ID ${id}` }
-      )
+     await bot.sendPhoto(
+  process.env.CHAT_ID,
+  req.files.passport[0].path,
+  { caption: `📘 Pasport | ID ${id}` }
+)
 
-      // CHEK
-      await bot.sendDocument(
-        process.env.CHAT_ID,
-        req.files.check[0].path,
-        { caption: `🧾 To‘lov cheki | ID ${id}` }
-      )
+await bot.sendPhoto(
+  process.env.CHAT_ID,
+  req.files.check[0].path,
+  { caption: `🧾 To‘lov cheki | ID ${id}` }
+)
 
       // TOZALASH
       fs.unlink(req.files.passport[0].path, () => {})
