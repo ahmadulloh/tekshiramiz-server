@@ -31,8 +31,7 @@ app.post(
     try {
 
       // ID
-      orderId++
-      const id = String(orderId).padStart(3, '0')
+     const id = Math.floor(100 + Math.random() * 900) // 100-999
 
       const { name, telegram, whatsapp } = req.body
       const wa = whatsapp.replace(/\D/g, '')
@@ -52,7 +51,7 @@ app.post(
       )
 
       // PASSPORT
-     await bot.sendPhoto(
+   await bot.sendPhoto(
   process.env.CHAT_ID,
   req.files.passport[0].path,
   { caption: `📘 Pasport | ID ${id}` }
