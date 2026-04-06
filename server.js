@@ -22,11 +22,6 @@ async function compressImage(input, output) {
     .toFile(output)
 }
 
-// 🔥 TEST ROUTE (brauzer uchun)
-app.get('/', (req, res) => {
-  res.send('Server ishlayapti 🚀')
-})
-
 app.post(
   '/send',
   upload.fields([
@@ -34,22 +29,18 @@ app.post(
     { name: 'check', maxCount: 1 }
   ]),
   async (req, res) => {
+
+    res.json({ success: true })
+
     try {
 
-      // ✅ FILE TEKSHIRISH
-      if (!req.files || !req.files.passport || !req.files.check) {
-        return res.status(400).json({ error: 'Fayllar topilmadi' })
-      }
-
-      // ✅ ID
+      // ✅ ID (3 xonali)
       orderId++
       const id = String(orderId).padStart(3, '0')
 
-      // ✅ DATA
       const { name, telegram, whatsapp } = req.body
-      const wa = (whatsapp || '').replace(/\D/g, '')
+      const wa = whatsapp.replace(/\D/g, '')
 
-      // ✅ TELEGRAM TEXT
       await bot.sendMessage(
         process.env.CHAT_ID,
 `🆕 <b>Yangi tekshiruv</b>
@@ -58,7 +49,7 @@ app.post(
 👤 <b>Ism:</b> ${name}
 📱 <b>Aloqa:</b> ${telegram}
 💬 <b>WhatsApp:</b>
-<a href="https://api.whatsapp.com/send/?phone=${wa}">${whatsapp}</a>
+<a href="https://api.whatsapp.com/send/?phone=${wa}&text&type=phone_number&app_absent=0">${whatsapp}</a>
 
 💸 <b>Narx:</b> 180.000 so‘m`,
         { parse_mode: 'HTML' }
@@ -92,16 +83,12 @@ app.post(
       fs.unlink(pOut, () => {})
       fs.unlink(cOut, () => {})
 
-      // ✅ SUCCESS
-      res.json({ success: true })
-
     } catch (e) {
-      console.error('ERROR:', e)
-      res.status(500).json({ error: 'Serverda xatolik' })
+      console.error(e.message)
     }
   }
 )
 
-app.listen(process.env.PORT || 3000, () => {
+app.listen(process.env.PORT || 3000, () =>
   console.log('✅ Server ishlayapti')
-})
+)
